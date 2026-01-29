@@ -13,7 +13,7 @@ const PUBLIC_ROUTES = [
 ];
 
 // Routes only for talent role
-const TALENT_ROUTES = ["/dashboard", "/profile", "/wallet", "/verification"];
+const TALENT_ROUTES = ["/dashboard", "/profile", "/jobs", "/wallet", "/verification"];
 
 // Routes only for client role
 const CLIENT_ROUTES = ["/company"];
