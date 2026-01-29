@@ -199,7 +199,7 @@ function ExperienceDialog({
   const onSubmit = async (data: ExperienceInput) => {
     setIsSubmitting(true);
     try {
-      const url = isEdit
+      const url = isEdit && experience
         ? `/api/talent/experience/${experience.id}`
         : "/api/talent/experience";
 
