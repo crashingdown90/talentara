@@ -151,11 +151,8 @@ The TALENTARA codebase was audited across security, code quality, database desig
 10. **Proper .gitignore:** Environment files are properly excluded
 
 ### Remaining Recommendations
-1. Implement Redis-based rate limiting for production (replace in-memory store)
-2. Add audit logging for admin actions
-3. Add request/response logging middleware
-4. Add automated security scanning in CI/CD pipeline
-5. **Rotate the database password** (leaked in git history — must be done manually in Supabase Dashboard)
+1. **Rotate the database password** (leaked in git history — must be done manually in Supabase Dashboard)
+2. Clean git history with BFG Repo-Cleaner to remove leaked credentials
 
 ---
 
@@ -198,3 +195,16 @@ The TALENTARA codebase was audited across security, code quality, database desig
 | `supabase/migrations/015_sensitive_field_protection.sql` | New: Tighten RLS to require auth, create secure views |
 | `.env.example` | Added ENCRYPTION_KEY |
 | `SECURITY_AUDIT_REPORT.md` | Updated with all fixes |
+
+### Commit 4: Production Hardening (Recommendations)
+| File | Change |
+|------|--------|
+| `src/lib/utils/rate-limit.ts` | Rewritten: pluggable backend (in-memory + Redis/Upstash), async API |
+| `src/app/api/auth/login/route.ts` | Updated: await async rate limiter |
+| `src/app/api/auth/register/route.ts` | Updated: await async rate limiter |
+| `supabase/migrations/016_create_audit_logs.sql` | New: audit_logs table with admin-only RLS |
+| `src/lib/utils/audit-log.ts` | New file: audit logging utility with typed actions |
+| `src/lib/utils/api-logger.ts` | New file: request/response logging wrapper |
+| `src/types/database.ts` | Added audit_logs table types |
+| `.github/workflows/security.yml` | New: CI/CD security pipeline (audit, lint, secrets, build) |
+| `.env.example` | Added REDIS_URL, REDIS_TOKEN |

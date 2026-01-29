@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     // Rate limiting by IP
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const rateLimitKey = `register:${ip}`;
-    const rateLimit = checkRateLimit(rateLimitKey, REGISTER_RATE_LIMIT);
+    const rateLimit = await checkRateLimit(rateLimitKey, REGISTER_RATE_LIMIT);
 
     if (!rateLimit.allowed) {
       return NextResponse.json(

@@ -686,6 +686,32 @@ export interface Database {
           resolved_at?: string | null;
         };
       };
+      audit_logs: {
+        Row: {
+          id: string;
+          actor_id: string;
+          actor_role: string;
+          action: string;
+          target_type: string;
+          target_id: string | null;
+          details: Json;
+          ip_address: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          actor_id: string;
+          actor_role: string;
+          action: string;
+          target_type: string;
+          target_id?: string | null;
+          details?: Json;
+          ip_address?: string | null;
+          user_agent?: string | null;
+        };
+        Update: never;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
