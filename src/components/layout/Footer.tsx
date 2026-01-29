@@ -20,7 +20,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/register" className="hover:text-brand-600">Daftar Sebagai Talent</Link></li>
               <li><Link href="/jobs" className="hover:text-brand-600">Cari Lowongan</Link></li>
-              <li><Link href="#" className="hover:text-brand-600">Tips & Panduan</Link></li>
+              <li><span className="cursor-default text-muted-foreground/60">Tips & Panduan (segera hadir)</span></li>
             </ul>
           </div>
 
@@ -29,8 +29,8 @@ export function Footer() {
             <h4 className="text-sm font-semibold">Untuk Perusahaan</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/register" className="hover:text-brand-600">Daftar Sebagai Client</Link></li>
-              <li><Link href="#" className="hover:text-brand-600">Pasang Lowongan</Link></li>
-              <li><Link href="#" className="hover:text-brand-600">Harga & Komisi</Link></li>
+              <li><span className="cursor-default text-muted-foreground/60">Pasang Lowongan (segera hadir)</span></li>
+              <li><span className="cursor-default text-muted-foreground/60">Harga & Komisi (segera hadir)</span></li>
             </ul>
           </div>
 
@@ -38,10 +38,10 @@ export function Footer() {
           <div className="space-y-3">
             <h4 className="text-sm font-semibold">TALENTARA</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="#" className="hover:text-brand-600">Tentang Kami</Link></li>
-              <li><Link href="#" className="hover:text-brand-600">Syarat & Ketentuan</Link></li>
-              <li><Link href="#" className="hover:text-brand-600">Kebijakan Privasi</Link></li>
-              <li><Link href="#" className="hover:text-brand-600">Hubungi Kami</Link></li>
+              <li><span className="cursor-default text-muted-foreground/60">Tentang Kami (segera hadir)</span></li>
+              <li><span className="cursor-default text-muted-foreground/60">Syarat & Ketentuan (segera hadir)</span></li>
+              <li><span className="cursor-default text-muted-foreground/60">Kebijakan Privasi (segera hadir)</span></li>
+              <li><span className="cursor-default text-muted-foreground/60">Hubungi Kami (segera hadir)</span></li>
             </ul>
           </div>
         </div>

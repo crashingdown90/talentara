@@ -27,8 +27,13 @@ export function useAuth() {
         if (authUser) {
           const response = await fetch("/api/auth/me");
           if (response.ok) {
-            const result = await response.json();
-            setUser(result.data);
+            try {
+              const result = await response.json();
+              setUser(result.data);
+            } catch {
+              console.error("Failed to parse /api/auth/me response");
+              setUser(null);
+            }
           } else {
             setUser(null);
           }
@@ -50,10 +55,14 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event) => {
         if (event === "SIGNED_IN") {
-          const response = await fetch("/api/auth/me");
-          if (response.ok) {
-            const result = await response.json();
-            setUser(result.data);
+          try {
+            const response = await fetch("/api/auth/me");
+            if (response.ok) {
+              const result = await response.json();
+              setUser(result.data);
+            }
+          } catch (error) {
+            console.error("Failed to fetch user on sign in:", error);
           }
         } else if (event === "SIGNED_OUT") {
           clearUser();
