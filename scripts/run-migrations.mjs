@@ -25,7 +25,7 @@ const MIGRATIONS_DIR = path.join(__dirname, "..", "supabase", "migrations");
 async function runMigrations() {
   const client = new pg.Client({
     connectionString: DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: true },
   });
 
   try {

@@ -18,10 +18,10 @@ export async function GET() {
       );
     }
 
-    // Fetch profile
+    // Fetch profile (select only fields used in the response)
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("*")
+      .select("id, email, role, full_name, phone, avatar_url, is_verified")
       .eq("id", user.id)
       .single();
 
@@ -39,14 +39,14 @@ export async function GET() {
     if (profile.role === "talent") {
       const { data } = await supabase
         .from("talents")
-        .select("*")
+        .select("id, category, gender, date_of_birth, height_cm, weight_kg, city, province, bio, verification_status, rating_avg, rating_count, total_jobs_completed, wallet_balance, daily_rate, is_available")
         .eq("profile_id", user.id)
         .single();
       talent = data;
     } else if (profile.role === "client") {
       const { data } = await supabase
         .from("companies")
-        .select("*")
+        .select("id, company_name, company_type, industry, city, province, website, company_logo_url, verification_status")
         .eq("profile_id", user.id)
         .single();
       company = data;

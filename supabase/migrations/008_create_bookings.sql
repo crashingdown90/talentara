@@ -7,14 +7,14 @@ CREATE OR REPLACE FUNCTION generate_booking_code()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.booking_code = 'TLNT-' || TO_CHAR(NOW(), 'YYYYMMDD') || '-' ||
-        UPPER(SUBSTR(MD5(RANDOM()::TEXT), 1, 4));
+        UPPER(SUBSTR(MD5(RANDOM()::TEXT), 1, 8));
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE TABLE bookings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    booking_code VARCHAR(20) NOT NULL UNIQUE,
+    booking_code VARCHAR(30) NOT NULL UNIQUE,
     job_id UUID NOT NULL REFERENCES jobs(id),
     talent_id UUID NOT NULL REFERENCES talents(id),
     company_id UUID NOT NULL REFERENCES companies(id),

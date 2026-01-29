@@ -48,15 +48,11 @@ export async function POST(request: Request) {
     });
 
     if (authError) {
-      // Handle duplicate email
-      if (authError.message.includes("already registered")) {
-        return NextResponse.json(
-          { success: false, error: "EMAIL_EXISTS", message: "Email sudah terdaftar" },
-          { status: 409 }
-        );
-      }
+      // Use a generic message to prevent account enumeration.
+      // Do not reveal whether a specific email is already registered.
+      console.error("Auth signup error:", authError.message);
       return NextResponse.json(
-        { success: false, error: "AUTH_ERROR", message: authError.message },
+        { success: false, error: "AUTH_ERROR", message: "Registrasi gagal. Silakan periksa data Anda dan coba lagi." },
         { status: 400 }
       );
     }
