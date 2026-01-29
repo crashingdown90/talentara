@@ -1,0 +1,119 @@
+import { createClient } from "@/lib/supabase/server";
+import { registerSchema } from "@/lib/validations/auth";
+import { NextResponse } from "next/server";
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+
+    // Validate input
+    const result = registerSchema.safeParse(body);
+    if (!result.success) {
+      const errors = result.error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      }));
+      return NextResponse.json(
+        { success: false, error: "VALIDATION_ERROR", message: "Data tidak valid", errors },
+        { status: 422 }
+      );
+    }
+
+    const validated = result.data;
+    const supabase = await createClient();
+
+    // 1. Create auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: validated.email,
+      password: validated.password,
+      options: {
+        data: {
+          full_name: validated.full_name,
+          role: validated.role,
+        },
+      },
+    });
+
+    if (authError) {
+      // Handle duplicate email
+      if (authError.message.includes("already registered")) {
+        return NextResponse.json(
+          { success: false, error: "EMAIL_EXISTS", message: "Email sudah terdaftar" },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json(
+        { success: false, error: "AUTH_ERROR", message: authError.message },
+        { status: 400 }
+      );
+    }
+
+    if (!authData.user) {
+      return NextResponse.json(
+        { success: false, error: "AUTH_ERROR", message: "Gagal membuat akun" },
+        { status: 500 }
+      );
+    }
+
+    // 2. Create profile
+    const { error: profileError } = await supabase.from("profiles").insert({
+      id: authData.user.id,
+      email: validated.email,
+      full_name: validated.full_name,
+      phone: validated.phone,
+      role: validated.role,
+    });
+
+    if (profileError) {
+      console.error("Profile creation error:", profileError);
+      return NextResponse.json(
+        { success: false, error: "PROFILE_ERROR", message: "Gagal membuat profil" },
+        { status: 500 }
+      );
+    }
+
+    // 3. Create role-specific record
+    if (validated.role === "talent") {
+      const { error: talentError } = await supabase.from("talents").insert({
+        profile_id: authData.user.id,
+        category: "spg", // Default category, can be updated later
+      });
+      if (talentError) {
+        console.error("Talent creation error:", talentError);
+      }
+    } else if (validated.role === "client") {
+      const { error: companyError } = await supabase.from("companies").insert({
+        profile_id: authData.user.id,
+        company_name: validated.full_name, // Placeholder, updated in company profile
+      });
+      if (companyError) {
+        console.error("Company creation error:", companyError);
+      }
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          user: {
+            id: authData.user.id,
+            email: authData.user.email,
+          },
+          profile: {
+            id: authData.user.id,
+            role: validated.role,
+            full_name: validated.full_name,
+          },
+        },
+        message: "Registrasi berhasil. Silakan cek email untuk verifikasi.",
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Register error:", error);
+    return NextResponse.json(
+      { success: false, error: "INTERNAL_ERROR", message: "Terjadi kesalahan server" },
+      { status: 500 }
+    );
+  }
+}
