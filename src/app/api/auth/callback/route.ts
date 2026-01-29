@@ -11,7 +11,13 @@ export async function GET(request: Request) {
   const next = searchParams.get("next") ?? "/";
 
   // Validate redirect path to prevent open redirect attacks
-  const isValidRedirect = next.startsWith("/") && !next.startsWith("//") && !next.includes(":");
+  // Block protocol-relative URLs (//), encoded sequences (%2f, %5c), colon schemes, and backslashes
+  const isValidRedirect =
+    next.startsWith("/") &&
+    !next.startsWith("//") &&
+    !next.includes(":") &&
+    !next.includes("\\") &&
+    !next.includes("%");
 
   if (code) {
     const supabase = await createClient();

@@ -1,12 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { loginSchema } from "@/lib/validations/auth";
 import { checkRateLimit, LOGIN_RATE_LIMIT } from "@/lib/utils/rate-limit";
+import { getClientIp } from "@/lib/utils/request";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
     // Rate limiting by IP
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const ip = getClientIp(request);
     const rateLimitKey = `login:${ip}`;
     const rateLimit = await checkRateLimit(rateLimitKey, LOGIN_RATE_LIMIT);
 
@@ -14,6 +15,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { success: false, error: "RATE_LIMIT", message: "Terlalu banyak percobaan login. Silakan coba lagi nanti." },
         { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } }
+      );
+    }
+
+    // Validate Content-Type
+    const contentType = request.headers.get("content-type");
+    if (!contentType?.includes("application/json")) {
+      return NextResponse.json(
+        { success: false, error: "INVALID_CONTENT_TYPE", message: "Content-Type harus application/json" },
+        { status: 415 }
       );
     }
 

@@ -83,11 +83,18 @@ export function useAuth() {
       body: JSON.stringify({ email, password }),
     });
 
-    const result = await response.json();
-
     if (!response.ok) {
-      throw new Error(result.message || "Login gagal");
+      let message = "Login gagal";
+      try {
+        const error = await response.json();
+        message = error.message || message;
+      } catch {
+        // Response is not JSON
+      }
+      throw new Error(message);
     }
+
+    const result = await response.json();
 
     // Refresh to let middleware set cookies
     router.refresh();
@@ -108,12 +115,18 @@ export function useAuth() {
       body: JSON.stringify(data),
     });
 
-    const result = await response.json();
-
     if (!response.ok) {
-      throw new Error(result.message || "Registrasi gagal");
+      let message = "Registrasi gagal";
+      try {
+        const error = await response.json();
+        message = error.message || message;
+      } catch {
+        // Response is not JSON
+      }
+      throw new Error(message);
     }
 
+    const result = await response.json();
     return result;
   };
 

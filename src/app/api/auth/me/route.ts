@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, API_RATE_LIMIT } from "@/lib/utils/rate-limit";
+import { getClientIp } from "@/lib/utils/request";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
     // Rate limiting by IP
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const ip = getClientIp(request);
     const rateLimit = await checkRateLimit(`me:${ip}`, API_RATE_LIMIT);
 
     if (!rateLimit.allowed) {
