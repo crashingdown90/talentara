@@ -35,7 +35,8 @@ export function useAuth() {
         } else {
           setUser(null);
         }
-      } catch {
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
         setUser(null);
       } finally {
         setLoading(false);
@@ -108,7 +109,14 @@ export function useAuth() {
   };
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+      if (!response.ok) {
+        console.error("Logout API failed:", response.status);
+      }
+    } catch (error) {
+      console.error("Logout API error:", error);
+    }
     const supabase = createClient();
     await supabase.auth.signOut();
     clearUser();

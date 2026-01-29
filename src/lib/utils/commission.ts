@@ -35,6 +35,13 @@ export function calculateBookingPrices(
   dailyRate: number,
   totalDays: number
 ): BookingPrices {
+  if (dailyRate < 0 || totalDays < 1) {
+    throw new Error(
+      `Invalid booking parameters: dailyRate=${dailyRate}, totalDays=${totalDays}. ` +
+      "dailyRate must be >= 0 and totalDays must be >= 1."
+    );
+  }
+
   const talentFee = dailyRate * totalDays;
   const talentCommission = Math.round(talentFee * COMMISSION_RATES.TALENT);
   const clientCommission = Math.round(talentFee * COMMISSION_RATES.CLIENT);

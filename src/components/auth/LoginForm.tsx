@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -31,8 +32,17 @@ export function LoginForm() {
       setServerError(null);
       const result = await login(data.email, data.password);
 
-      // Redirect based on role
-      if (result.data?.user?.role === "client") {
+      // Validate and use redirect param, or fall back to role-based default
+      const redirect = searchParams.get("redirect");
+      const isSafeRedirect =
+        redirect &&
+        redirect.startsWith("/") &&
+        !redirect.startsWith("//") &&
+        !redirect.includes(":");
+
+      if (isSafeRedirect) {
+        router.push(redirect);
+      } else if (result.data?.user?.role === "client") {
         router.push("/company/dashboard");
       } else {
         router.push("/dashboard");

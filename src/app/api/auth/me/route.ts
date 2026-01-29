@@ -1,8 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { checkRateLimit, API_RATE_LIMIT } from "@/lib/utils/rate-limit";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Rate limiting by IP
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rateLimit = await checkRateLimit(`me:${ip}`, API_RATE_LIMIT);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { success: false, error: "RATE_LIMIT", message: "Terlalu banyak permintaan. Silakan coba lagi nanti." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } }
+      );
+    }
+
     const supabase = await createClient();
 
     // Get current user
