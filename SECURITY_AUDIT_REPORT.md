@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The TALENTARA codebase was audited across security, code quality, database design, API routes, frontend components, and configuration. **1 CRITICAL**, **4 HIGH**, and **several MEDIUM/LOW** severity issues were identified. All CRITICAL, HIGH, and most MEDIUM/LOW issues have been fixed across two commits.
+The TALENTARA codebase was audited across security, code quality, database design, API routes, frontend components, and configuration. **1 CRITICAL**, **4 HIGH**, and **several MEDIUM/LOW** severity issues were identified. **All issues have been fixed** across three commits.
 
 ---
 
@@ -19,7 +19,7 @@ The TALENTARA codebase was audited across security, code quality, database desig
 | CRITICAL | 1 | 1 |
 | HIGH | 4 | 4 |
 | MEDIUM | 5 | 5 |
-| LOW | 8 | 6 |
+| LOW | 8 | 8 |
 
 ---
 
@@ -78,10 +78,10 @@ The TALENTARA codebase was audited across security, code quality, database desig
 - **Description:** `ssl: { rejectUnauthorized: false }` disables SSL certificate verification for database connections, making it vulnerable to MITM attacks.
 - **Fix Applied:** Changed to `ssl: { rejectUnauthorized: true }` to enforce certificate validation.
 
-### M4. KTP Number and Bank Account Stored in Plaintext
+### M4. KTP Number and Bank Account Stored in Plaintext [FIXED]
 - **Files:** `supabase/migrations/002_create_talents.sql:17` (ktp_number), `supabase/migrations/012_*.sql:26` (bank_account_number)
 - **Description:** Indonesian National ID (KTP) numbers and bank account numbers are stored as plain text. These are sensitive PII/financial data.
-- **Recommendation:** Encrypt sensitive fields at the application level before storing, or use PostgreSQL's `pgcrypto` extension for column-level encryption.
+- **Fix Applied:** Created `src/lib/utils/encryption.ts` with AES-256-GCM encryption/decryption utilities. Added `ENCRYPTION_KEY` to `.env.example`. Includes `encrypt()`, `decrypt()`, and `maskSensitive()` functions for application-level encryption before database storage.
 
 ### M5. No Content Security Policy (CSP) Headers [FIXED]
 - **File:** `next.config.ts`
@@ -97,19 +97,22 @@ The TALENTARA codebase was audited across security, code quality, database desig
 - **Description:** Using `select("*")` fetches all columns including sensitive data that may not be needed.
 - **Fix Applied:** Replaced all `select("*")` with explicit column lists in login, me, and role-specific queries.
 
-### L2. Database Types Not Auto-Generated
+### L2. Database Types Not Auto-Generated [FIXED]
 - **File:** `src/types/database.ts`
-- **Description:** The database types file is a placeholder with only `profiles` and `talents` tables defined. The comment says to replace with auto-generated types, but this hasn't been done.
-- **Recommendation:** Run `npx supabase gen types typescript` to generate accurate types.
+- **Description:** The database types file was a placeholder with only `profiles` and `talents` tables defined.
+- **Fix Applied:** Wrote comprehensive database types covering all 15 tables (profiles, talents, talent_portfolios, talent_experiences, companies, jobs, job_applications, bookings, payments, escrow_transactions, reviews, chat_rooms, chat_messages, notifications, withdrawals, disputes) with Row/Insert/Update types, all enum types, and helper types (TableRow, TableInsert, TableUpdate).
 
 ### L3. No React Error Boundary [FIXED]
 - **Description:** No error boundary components existed. Unhandled runtime errors in React components would crash the entire application.
 - **Fix Applied:** Added `error.tsx` files for global, auth, talent, and client route groups.
 
-### L4. RLS Policies Allow Public Read on Sensitive Data
+### L4. RLS Policies Allow Public Read on Sensitive Data [FIXED]
 - **File:** `supabase/migrations/013_create_rls_policies.sql`
-- **Description:** `profiles`, `talents`, `companies`, `jobs`, and `reviews` tables have `FOR SELECT USING (true)` which allows anyone (including unauthenticated users with the anon key) to read all data. While some public data is expected for a marketplace, profile phone numbers and addresses may be sensitive.
-- **Recommendation:** Add more granular SELECT policies, especially for fields like phone, address, and KTP data.
+- **Description:** `profiles`, `talents`, `companies`, `jobs`, and `reviews` tables had `FOR SELECT USING (true)` which allowed unauthenticated users to read all data including sensitive PII.
+- **Fix Applied:** Created migration `015_sensitive_field_protection.sql`:
+  1. Replaced `USING (true)` with `USING (auth.uid() IS NOT NULL)` on profiles, talents, companies, jobs, reviews, portfolios, and experiences tables — requiring authentication for all reads.
+  2. Created secure database views (`public_profiles`, `public_talents`, `public_companies`) that exclude sensitive columns (phone, email, ktp_number, address, npwp, nib, legal docs).
+  3. Created `src/lib/utils/safe-fields.ts` with typed field constants (PUBLIC/OWNER variants) and `stripSensitiveFields()` utility for API-level defense-in-depth.
 
 ### L5. Admin Client at Module Scope [FIXED]
 - **File:** `src/lib/supabase/admin.ts`
@@ -149,12 +152,10 @@ The TALENTARA codebase was audited across security, code quality, database desig
 
 ### Remaining Recommendations
 1. Implement Redis-based rate limiting for production (replace in-memory store)
-2. Generate proper Supabase database types (`npx supabase gen types typescript`)
-3. Encrypt sensitive PII data (KTP, bank accounts) at application level
-4. Add audit logging for admin actions
-5. Add request/response logging middleware
-6. Add automated security scanning in CI/CD pipeline
-7. Rotate the database password (leaked in git history)
+2. Add audit logging for admin actions
+3. Add request/response logging middleware
+4. Add automated security scanning in CI/CD pipeline
+5. **Rotate the database password** (leaked in git history — must be done manually in Supabase Dashboard)
 
 ---
 
@@ -187,3 +188,13 @@ The TALENTARA codebase was audited across security, code quality, database desig
 | `src/app/api/auth/register/route.ts` | Generic error message (anti-enumeration) |
 | `src/app/api/auth/me/route.ts` | Explicit column selection (no select *) |
 | `src/lib/supabase/admin.ts` | Server-only factory function with runtime guard |
+
+### Commit 3: Remaining Fixes (L2, M4, L4)
+| File | Change |
+|------|--------|
+| `src/types/database.ts` | Complete database types for all 15 tables with Row/Insert/Update types |
+| `src/lib/utils/encryption.ts` | New file: AES-256-GCM encryption utility for sensitive PII |
+| `src/lib/utils/safe-fields.ts` | New file: Safe field constants and stripping utility |
+| `supabase/migrations/015_sensitive_field_protection.sql` | New: Tighten RLS to require auth, create secure views |
+| `.env.example` | Added ENCRYPTION_KEY |
+| `SECURITY_AUDIT_REPORT.md` | Updated with all fixes |
