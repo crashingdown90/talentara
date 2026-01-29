@@ -1,9 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { loginSchema } from "@/lib/validations/auth";
+import { checkRateLimit, LOGIN_RATE_LIMIT } from "@/lib/utils/rate-limit";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
+    // Rate limiting by IP
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rateLimitKey = `login:${ip}`;
+    const rateLimit = checkRateLimit(rateLimitKey, LOGIN_RATE_LIMIT);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { success: false, error: "RATE_LIMIT", message: "Terlalu banyak percobaan login. Silakan coba lagi nanti." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } }
+      );
+    }
+
     const body = await request.json();
 
     // Validate input
@@ -42,10 +55,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch user profile
+    // Fetch user profile (select only needed fields)
     const { data: profile } = await supabase
       .from("profiles")
-      .select("*")
+      .select("role, full_name, avatar_url, is_verified")
       .eq("id", authData.user.id)
       .single();
 

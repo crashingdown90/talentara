@@ -8,11 +8,13 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000
 
 // =============================
 // Commission Rates
+// NOTE: These are server-side only values. Do NOT use NEXT_PUBLIC_ prefix
+// for commission rates as they should not be configurable from the client.
 // =============================
 
 export const COMMISSION_RATES = {
-  TALENT: Number(process.env.NEXT_PUBLIC_COMMISSION_TALENT) || 0.10, // 10%
-  CLIENT: Number(process.env.NEXT_PUBLIC_COMMISSION_CLIENT) || 0.05, // 5%
+  TALENT: 0.10, // 10% - deducted from talent fee
+  CLIENT: 0.05, // 5% - added to client payment
 } as const;
 
 // =============================

@@ -10,6 +10,9 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/";
 
+  // Validate redirect path to prevent open redirect attacks
+  const isValidRedirect = next.startsWith("/") && !next.startsWith("//") && !next.includes(":");
+
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -30,7 +33,8 @@ export async function GET(request: Request) {
         // Redirect based on role
         const redirectPath =
           profile?.role === "client" ? "/company/dashboard" : "/dashboard";
-        return NextResponse.redirect(`${origin}${next === "/" ? redirectPath : next}`);
+        const safePath = (isValidRedirect && next !== "/") ? next : redirectPath;
+        return NextResponse.redirect(`${origin}${safePath}`);
       }
     }
   }

@@ -29,11 +29,17 @@ export async function middleware(request: NextRequest) {
     return updateSession(request);
   }
 
-  // Allow static files and Next.js internals
+  // Allow Next.js internals (static files already excluded by matcher config)
+  if (pathname.startsWith("/_next")) {
+    return updateSession(request);
+  }
+
+  // Only allow specific public auth API routes (not all /api/auth/*)
+  // The /api/auth/me and /api/auth/logout routes still require authentication
   if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/auth") ||
-    pathname.includes(".") // static files
+    pathname === "/api/auth/register" ||
+    pathname === "/api/auth/login" ||
+    pathname === "/api/auth/callback"
   ) {
     return updateSession(request);
   }

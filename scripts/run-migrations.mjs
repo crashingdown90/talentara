@@ -11,8 +11,14 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATABASE_URL =
-  "postgresql://postgres:GunungAgung13$$@db.usthlxujzpkjqzpkwzrr.supabase.co:5432/postgres";
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  console.error("DATABASE_URL environment variable is not set.");
+  console.error("Set it in your .env file or pass it directly:");
+  console.error("  DATABASE_URL=postgresql://... node scripts/run-migrations.mjs");
+  process.exit(1);
+}
 
 const MIGRATIONS_DIR = path.join(__dirname, "..", "supabase", "migrations");
 

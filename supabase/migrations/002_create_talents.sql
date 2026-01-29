@@ -22,7 +22,7 @@ CREATE TABLE talents (
     rating_avg DECIMAL(3,2) DEFAULT 0.00,
     rating_count INTEGER DEFAULT 0,
     total_jobs_completed INTEGER DEFAULT 0,
-    wallet_balance BIGINT DEFAULT 0,
+    wallet_balance BIGINT DEFAULT 0 CHECK (wallet_balance >= 0),
     daily_rate BIGINT,
     is_available BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),

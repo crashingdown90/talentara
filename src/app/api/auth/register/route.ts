@@ -1,9 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { registerSchema } from "@/lib/validations/auth";
+import { checkRateLimit, REGISTER_RATE_LIMIT } from "@/lib/utils/rate-limit";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
+    // Rate limiting by IP
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rateLimitKey = `register:${ip}`;
+    const rateLimit = checkRateLimit(rateLimitKey, REGISTER_RATE_LIMIT);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { success: false, error: "RATE_LIMIT", message: "Terlalu banyak percobaan registrasi. Silakan coba lagi nanti." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } }
+      );
+    }
+
     const body = await request.json();
 
     // Validate input
@@ -80,6 +93,12 @@ export async function POST(request: Request) {
       });
       if (talentError) {
         console.error("Talent creation error:", talentError);
+        // Clean up: delete the profile to avoid inconsistent state
+        await supabase.from("profiles").delete().eq("id", authData.user.id);
+        return NextResponse.json(
+          { success: false, error: "PROFILE_ERROR", message: "Gagal membuat profil talent" },
+          { status: 500 }
+        );
       }
     } else if (validated.role === "client") {
       const { error: companyError } = await supabase.from("companies").insert({
@@ -88,6 +107,12 @@ export async function POST(request: Request) {
       });
       if (companyError) {
         console.error("Company creation error:", companyError);
+        // Clean up: delete the profile to avoid inconsistent state
+        await supabase.from("profiles").delete().eq("id", authData.user.id);
+        return NextResponse.json(
+          { success: false, error: "PROFILE_ERROR", message: "Gagal membuat profil perusahaan" },
+          { status: 500 }
+        );
       }
     }
 
